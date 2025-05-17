@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import EditableRow from "./EditableRow";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const initialRecords = [
     {
@@ -11,7 +13,7 @@ const initialRecords = [
         actual_arrival: "2025-05-17T08:10",
         eta_departure: "2025-05-17T14:00",
         actual_departure: "2025-05-17T14:30",
-        berth_number: "Berth 5",
+        berth_number: "5",
         berth_length: 200,
         berth_depth: 12,
     },
@@ -24,7 +26,33 @@ const initialRecords = [
         actual_arrival: "2025-05-17T10:15",
         eta_departure: "2025-05-17T16:00",
         actual_departure: "2025-05-17T16:45",
-        berth_number: "Berth 2",
+        berth_number: "3",
+        berth_length: 150,
+        berth_depth: 10,
+    },
+    {
+        id: 3,
+        boat_id: "C234",
+        boat_length: 122,
+        draft: 7.5,
+        eta_arrival: "2025-05-17T10:00",
+        actual_arrival: "2025-05-17T10:15",
+        eta_departure: "2025-05-17T16:00",
+        actual_departure: "2025-05-17T16:45",
+        berth_number: "2",
+        berth_length: 150,
+        berth_depth: 10,
+    },
+    {
+        id: 4,
+        boat_id: "D123",
+        boat_length: 122,
+        draft: 7.5,
+        eta_arrival: "2025-05-17T10:00",
+        actual_arrival: "2025-05-17T10:15",
+        eta_departure: "2025-05-17T16:00",
+        actual_departure: "2025-05-17T16:45",
+        berth_number: "5",
         berth_length: 150,
         berth_depth: 10,
     },
@@ -91,12 +119,45 @@ const RecordTable = () => {
         rec.boat_id.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleGeneratePDF = () => {
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text("Cargo Ship Berth Records", 14, 20);
+
+        const tableData = records.map((rec) => [
+            rec.boat_id,
+            rec.eta_arrival,
+            rec.eta_departure,
+            rec.berth_number,
+        ]);
+
+        autoTable(doc, {
+            startY: 30,
+            head: [["Boat ID", "ETA Arrival", "ETA Departure", "Berth Number"]],
+            body: tableData,
+        });
+
+        doc.save("ship_records.pdf");
+    };
+
+    // Count how many times each berth number is used
+    const berthUsage = records.reduce((acc, rec) => {
+        acc[rec.berth_number] = (acc[rec.berth_number] || 0) + 1;
+        return acc;
+    }, {});
+
+
+
     return (
         <>
             {/* Toolbar */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <button className="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">
                     ➕ Add New Record
+                </button>
+                <button onClick={handleGeneratePDF} className="btn btn-warning ">
+                    📄 Generate PDF
                 </button>
                 <input
                     type="text"
@@ -111,7 +172,7 @@ const RecordTable = () => {
             <div className="row gy-4">
                 {filteredRecords.length > 0 ? (
                     filteredRecords.map((record) => (
-                        <div className="col-md-6" key={record.id}>
+                        <div className="col-12 col-md-6 col-lg-4" key={record.id}>
                             <EditableRow
                                 record={record}
                                 isEditing={editId === record.id}
@@ -119,6 +180,7 @@ const RecordTable = () => {
                                 onSave={handleSave}
                                 onCancel={handleCancel}
                                 onDelete={handleDelete}
+                                isConflict={berthUsage[record.berth_number] > 1}
                             />
                         </div>
                     ))
