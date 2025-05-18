@@ -1,9 +1,11 @@
 # Berth Management
 An efficient and effective management system that predicts the right place and time for vessels at docking ports to berth, enabling minimal wait time. Developed using ML model in Python, using real data from online resources. 
 
+## Tech Stack
+
 This project consists of a backend and frontend setup:
 - Backend: Built using `Python` and `FastAPI`, it provides API endpoints for berth scheduling and management. It runs on `localhost:8000`, and API documentation is available at `localhost:8000/docs`.
-- Frontend: A client-side application developed with `Node.js` and `npm` that allows users to interact with berth scheduling functionalities. It runs on `localhost:3000`.
+- Frontend: A client-side application developed with `React.js` using `bootstrap` and  `tailwind` that allows users to interact with berth scheduling functionalities. It runs on `localhost:3000`.
 
 The model is available inside the `model` directory. ★Please do not remove this model!★
 
@@ -43,3 +45,6 @@ npm run
 
 Frontend is running on `localhost:3000`.
 
+Upon opening the application on `localhost:3000`, you can view/edit accounced vessels, and also add new ones. You can edit the berth location, see the time of arrival and departure.
+
+One extra feature is to pring `pdf` report containing all the information for the vessels and their planned operations.
