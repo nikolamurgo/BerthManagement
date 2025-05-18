@@ -8,11 +8,15 @@ This project consists of a backend and frontend setup:
 The model is available inside the `model` directory. ★Please do not remove this model!★
 
 ## Requirements:
-1. Latest Node and NPM versions
-2. Latest Python version with `pip` installed
-3. Install the required python packages:
+1. Install/open your favourite text editor of choice.
+2. Open the terminal and clone this repository using the command `https://github.com/nikolamurgo/BerthManagement.git`.
+3. Latest Node and NPM versions
+4. Latest Python version with `pip` installed
+5. Install the required python packages:
 
 ## Set up
+
+First open your terminal and navigate to the directory where you cloned the repository. 
 
 Required python packages can be installed with the command:
 ```
