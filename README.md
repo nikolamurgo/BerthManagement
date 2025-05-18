@@ -5,7 +5,7 @@ This project consists of a backend and frontend setup:
 - Backend: Built using `Python` and `FastAPI`, it provides API endpoints for berth scheduling and management. It runs on `localhost:8000`, and API documentation is available at `localhost:8000/docs`.
 - Frontend: A client-side application developed with `Node.js` and `npm` that allows users to interact with berth scheduling functionalities. It runs on `localhost:3000`.
 
-The model is available inside the `model` directory. ★★Please do not remove this model!★
+The model is available inside the `model` directory. ★Please do not remove this model!★
 
 ## Requirements:
 1. Latest Node and NPM versions
