@@ -22,15 +22,15 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
     };
 
     return (
-        <div className={`card ${isConflict ? "border border-warning bg-warning-subtle" : ""}`}>
+        <div className={`card ${isConflict ? "border border-danger bg-danger-subtle" : ""}`}>
             <div className="card-body">
                 <div className="d-inline-block px-3 py-1 bg-dark text-white rounded mb-4 fw-bold">
-                    Boat ID: {record.boat_id}
+                    Vessel Code: {record.vessel_code}
                 </div>
 
                 {isConflict && (
                     <div className="badge bg-warning text-dark mb-3">
-                        ⚠️ Conflict: Same Berth Assigned
+                        ⚠️ Conflict: Duplicate Berth
                     </div>
                 )}
 
@@ -39,35 +39,52 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                 <h6 className="text-primary fw-bold mb-3">Vessel Information</h6>
 
                 <div className="row mb-2">
-                    <label className="col-sm-5 col-form-label fw-bold">Boat Length:</label>
+                    <label className="col-sm-5 col-form-label fw-bold">Vessel Name:</label>
                     <div className="col-sm-7">
                         {isEditing ? (
                             <input
                                 type="text"
-                                name="boat_length"
-                                value={editedRecord.boat_length}
+                                name="vessel_name"
+                                value={editedRecord.vessel_name}
                                 onChange={handleChange}
                                 className="form-control"
                             />
                         ) : (
-                            <div className="form-control-plaintext">{record.boat_length}</div>
+                            <div className="form-control-plaintext">{record.vessel_name}</div>
                         )}
                     </div>
                 </div>
 
                 <div className="row mb-2">
-                    <label className="col-sm-5 col-form-label fw-bold">Draft:</label>
+                    <label className="col-sm-5 col-form-label fw-bold">Vessel Length:</label>
                     <div className="col-sm-7">
                         {isEditing ? (
                             <input
                                 type="text"
-                                name="draft"
-                                value={editedRecord.draft}
+                                name="vessel_length"
+                                value={editedRecord.vessel_length}
                                 onChange={handleChange}
                                 className="form-control"
                             />
                         ) : (
-                            <div className="form-control-plaintext">{record.draft}</div>
+                            <div className="form-control-plaintext">{record.vessel_length}</div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="row mb-2">
+                    <label className="col-sm-5 col-form-label fw-bold">Vessel Draft:</label>
+                    <div className="col-sm-7">
+                        {isEditing ? (
+                            <input
+                                type="text"
+                                name="vessel_draft"
+                                value={editedRecord.vessel_draft}
+                                onChange={handleChange}
+                                className="form-control"
+                            />
+                        ) : (
+                            <div className="form-control-plaintext">{record.vessel_draft}</div>
                         )}
                     </div>
                 </div>
@@ -75,134 +92,106 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                 {/* ETA Arrival */}
                 <div className="row mb-2">
                     <label className="col-sm-5 col-form-label fw-bold">ETA Arrival:</label>
-                    <div className="col-sm-3">
-                        {isEditing ? (
-                            <input
-                                type="date"
-                                value={splitDateTime(editedRecord.eta_arrival).date}
-                                onChange={(e) => handleDateTimeChange("eta_arrival", "date", e.target.value)}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">
-                                {splitDateTime(record.eta_arrival).date}
-                            </div>
-                        )}
-                    </div>
-                    <div className="col-sm-4">
-                        {isEditing ? (
-                            <input
-                                type="time"
-                                value={splitDateTime(editedRecord.eta_arrival).time}
-                                onChange={(e) => handleDateTimeChange("eta_arrival", "time", e.target.value)}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">
-                                {splitDateTime(record.eta_arrival).time}
-                            </div>
-                        )}
+                    <div className="col-sm-7">
+                        <div className="d-flex flex-wrap gap-2">
+                            {isEditing ? (
+                                <>
+                                    <input
+                                        type="date"
+                                        value={splitDateTime(editedRecord.eta_arrival).date}
+                                        onChange={(e) =>
+                                            handleDateTimeChange("eta_arrival", "date", e.target.value)
+                                        }
+                                        className="form-control w-auto"
+                                    />
+                                    <input
+                                        type="time"
+                                        value={splitDateTime(editedRecord.eta_arrival).time}
+                                        onChange={(e) =>
+                                            handleDateTimeChange("eta_arrival", "time", e.target.value)
+                                        }
+                                        className="form-control w-auto"
+                                    />
+                                </>
+                            ) : (
+                                <div className="form-control-plaintext">
+                                    {splitDateTime(record.eta_arrival).date}{" "}
+                                    <span className="ms-3">{splitDateTime(record.eta_arrival).time}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Actual Arrival */}
                 <div className="row mb-2">
                     <label className="col-sm-5 col-form-label fw-bold">Actual Arrival:</label>
-                    <div className="col-sm-3">
-                        {isEditing ? (
-                            <input
-                                type="date"
-                                value={splitDateTime(editedRecord.actual_arrival).date}
-                                onChange={(e) => handleDateTimeChange("actual_arrival", "date", e.target.value)}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">
-                                {splitDateTime(record.actual_arrival).date}
-                            </div>
-                        )}
-                    </div>
-                    <div className="col-sm-4">
-                        {isEditing ? (
-                            <input
-                                type="time"
-                                value={splitDateTime(editedRecord.actual_arrival).time}
-                                onChange={(e) => handleDateTimeChange("actual_arrival", "time", e.target.value)}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">
-                                {splitDateTime(record.actual_arrival).time}
-                            </div>
-                        )}
+                    <div className="col-sm-7">
+                        <div className="d-flex flex-wrap gap-2">
+                            {isEditing ? (
+                                <>
+                                    <input
+                                        type="date"
+                                        value={splitDateTime(editedRecord.actual_arrival).date}
+                                        onChange={(e) =>
+                                            handleDateTimeChange("actual_arrival", "date", e.target.value)
+                                        }
+                                        className="form-control w-auto"
+                                    />
+                                    <input
+                                        type="time"
+                                        value={splitDateTime(editedRecord.actual_arrival).time}
+                                        onChange={(e) =>
+                                            handleDateTimeChange("actual_arrival", "time", e.target.value)
+                                        }
+                                        className="form-control w-auto"
+                                    />
+                                </>
+                            ) : (
+                                <div className="form-control-plaintext">
+                                    {splitDateTime(record.actual_arrival).date}{" "}
+                                    <span className="ms-3">{splitDateTime(record.actual_arrival).time}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* ETA Departure */}
+
+                {/* Departure */}
                 <div className="row mb-2">
-                    <label className="col-sm-5 col-form-label fw-bold">ETA Departure:</label>
-                    <div className="col-sm-3">
-                        {isEditing ? (
-                            <input
-                                type="date"
-                                value={splitDateTime(editedRecord.eta_departure).date}
-                                onChange={(e) => handleDateTimeChange("eta_departure", "date", e.target.value)}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">
-                                {splitDateTime(record.eta_departure).date}
-                            </div>
-                        )}
-                    </div>
-                    <div className="col-sm-4">
-                        {isEditing ? (
-                            <input
-                                type="time"
-                                value={splitDateTime(editedRecord.eta_departure).time}
-                                onChange={(e) => handleDateTimeChange("eta_departure", "time", e.target.value)}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">
-                                {splitDateTime(record.eta_departure).time}
-                            </div>
-                        )}
+                    <label className="col-sm-5 col-form-label fw-bold">Departure:</label>
+                    <div className="col-sm-7">
+                        <div className="d-flex flex-wrap gap-2">
+                            {isEditing ? (
+                                <>
+                                    <input
+                                        type="date"
+                                        value={splitDateTime(editedRecord.departure).date}
+                                        onChange={(e) =>
+                                            handleDateTimeChange("departure", "date", e.target.value)
+                                        }
+                                        className="form-control w-auto"
+                                    />
+                                    <input
+                                        type="time"
+                                        value={splitDateTime(editedRecord.departure).time}
+                                        onChange={(e) =>
+                                            handleDateTimeChange("departure", "time", e.target.value)
+                                        }
+                                        className="form-control w-auto"
+                                    />
+                                </>
+                            ) : (
+                                <div className="form-control-plaintext">
+                                    {splitDateTime(record.departure).date}{" "}
+                                    <span className="ms-3">{splitDateTime(record.departure).time}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Actual Departure */}
-                <div className="row mb-4">
-                    <label className="col-sm-5 col-form-label fw-bold">Actual Departure:</label>
-                    <div className="col-sm-3">
-                        {isEditing ? (
-                            <input
-                                type="date"
-                                value={splitDateTime(editedRecord.actual_departure).date}
-                                onChange={(e) => handleDateTimeChange("actual_departure", "date", e.target.value)}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">
-                                {splitDateTime(record.actual_departure).date}
-                            </div>
-                        )}
-                    </div>
-                    <div className="col-sm-4">
-                        {isEditing ? (
-                            <input
-                                type="time"
-                                value={splitDateTime(editedRecord.actual_departure).time}
-                                onChange={(e) => handleDateTimeChange("actual_departure", "time", e.target.value)}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">
-                                {splitDateTime(record.actual_departure).time}
-                            </div>
-                        )}
-                    </div>
-                </div>
 
                 <h6 className="text-primary fw-bold mb-3">Berth Information</h6>
 

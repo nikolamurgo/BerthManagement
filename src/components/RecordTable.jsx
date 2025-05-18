@@ -6,52 +6,56 @@ import autoTable from "jspdf-autotable";
 const initialRecords = [
     {
         id: 1,
-        boat_id: "A123",
-        boat_length: 150,
-        draft: 9.2,
+        vessel_name: "some name",
+        vessel_code: "A123",
+        vessel_length: 150,
+        vessel_draft: 9.2,
         eta_arrival: "2025-05-17T08:00",
         actual_arrival: "2025-05-17T08:10",
         eta_departure: "2025-05-17T14:00",
-        actual_departure: "2025-05-17T14:30",
+        departure: "2025-05-17T14:30",
         berth_number: "5",
         berth_length: 200,
         berth_depth: 12,
     },
     {
         id: 2,
-        boat_id: "B245",
-        boat_length: 120,
-        draft: 7.5,
+        vessel_name: "some name",
+        vessel_code: "B245",
+        vessel_length: 120,
+        vessel_draft: 7.5,
         eta_arrival: "2025-05-17T10:00",
         actual_arrival: "2025-05-17T10:15",
         eta_departure: "2025-05-17T16:00",
-        actual_departure: "2025-05-17T16:45",
+        departure: "2025-05-17T16:45",
         berth_number: "3",
         berth_length: 150,
         berth_depth: 10,
     },
     {
         id: 3,
-        boat_id: "C234",
-        boat_length: 122,
-        draft: 7.5,
+        vessel_name: "some name",
+        vessel_code: "C234",
+        vessel_length: 122,
+        vessel_draft: 7.5,
         eta_arrival: "2025-05-17T10:00",
         actual_arrival: "2025-05-17T10:15",
         eta_departure: "2025-05-17T16:00",
-        actual_departure: "2025-05-17T16:45",
+        departure: "2025-05-17T16:45",
         berth_number: "2",
         berth_length: 150,
         berth_depth: 10,
     },
     {
         id: 4,
-        boat_id: "D123",
-        boat_length: 122,
-        draft: 7.5,
+        vessel_name: "some name",
+        vessel_code: "D123",
+        vessel_length: 122,
+        vessel_draft: 7.5,
         eta_arrival: "2025-05-17T10:00",
         actual_arrival: "2025-05-17T10:15",
         eta_departure: "2025-05-17T16:00",
-        actual_departure: "2025-05-17T16:45",
+        departure: "2025-05-17T16:45",
         berth_number: "5",
         berth_length: 150,
         berth_depth: 10,
@@ -63,13 +67,12 @@ const RecordTable = () => {
     const [editId, setEditId] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [newRecord, setNewRecord] = useState({
-        boat_id: "",
-        boat_length: "",
-        draft: "",
+        vessel_code: "",
+        vessel_length: "",
+        vessel_draft: "",
         eta_arrival: "",
         actual_arrival: "",
-        eta_departure: "",
-        actual_departure: "",
+        departure: "",
         berth_number: "",
         berth_length: "",
         berth_depth: "",
@@ -101,13 +104,12 @@ const RecordTable = () => {
         const newId = records.length ? Math.max(...records.map((r) => r.id)) + 1 : 1;
         setRecords([{ id: newId, ...newRecord }, ...records]);
         setNewRecord({
-            boat_id: "",
-            boat_length: "",
-            draft: "",
+            vessel_code: "",
+            vessel_length: "",
+            vessel_draft: "",
             eta_arrival: "",
             actual_arrival: "",
-            eta_departure: "",
-            actual_departure: "",
+            departure: "",
             berth_number: "",
             berth_length: "",
             berth_depth: "",
@@ -116,7 +118,7 @@ const RecordTable = () => {
     };
 
     const filteredRecords = records.filter((rec) =>
-        rec.boat_id.toLowerCase().includes(searchTerm.toLowerCase())
+        rec.vessel_code.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleGeneratePDF = () => {
@@ -126,15 +128,14 @@ const RecordTable = () => {
         doc.text("Cargo Ship Berth Records", 14, 20);
 
         const tableData = records.map((rec) => [
-            rec.boat_id,
+            rec.vessel_code,
             rec.eta_arrival,
-            rec.eta_departure,
             rec.berth_number,
         ]);
 
         autoTable(doc, {
             startY: 30,
-            head: [["Boat ID", "ETA Arrival", "ETA Departure", "Berth Number"]],
+            head: [["Vessel Code", "ETA Arrival", "ETA Departure", "Berth Number"]],
             body: tableData,
         });
 
@@ -146,7 +147,6 @@ const RecordTable = () => {
         acc[rec.berth_number] = (acc[rec.berth_number] || 0) + 1;
         return acc;
     }, {});
-
 
 
     return (
