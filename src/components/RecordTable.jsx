@@ -1,72 +1,68 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import EditableRow from "./EditableRow";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const initialRecords = [
-    {
-        id: 1,
-        vessel_name: "some name",
-        vessel_code: "A123",
-        vessel_length: 150,
-        vessel_draft: 9.2,
-        eta_arrival: "2025-05-17T08:00",
-        actual_arrival: "2025-05-17T08:10",
-        eta_departure: "2025-05-17T14:00",
-        departure: "2025-05-17T14:30",
-        berth_number: "5",
-        berth_length: 200,
-        berth_depth: 12,
-    },
-    {
-        id: 2,
-        vessel_name: "some name",
-        vessel_code: "B245",
-        vessel_length: 120,
-        vessel_draft: 7.5,
-        eta_arrival: "2025-05-17T10:00",
-        actual_arrival: "2025-05-17T10:15",
-        eta_departure: "2025-05-17T16:00",
-        departure: "2025-05-17T16:45",
-        berth_number: "3",
-        berth_length: 150,
-        berth_depth: 10,
-    },
-    {
-        id: 3,
-        vessel_name: "some name",
-        vessel_code: "C234",
-        vessel_length: 122,
-        vessel_draft: 7.5,
-        eta_arrival: "2025-05-17T10:00",
-        actual_arrival: "2025-05-17T10:15",
-        eta_departure: "2025-05-17T16:00",
-        departure: "2025-05-17T16:45",
-        berth_number: "2",
-        berth_length: 150,
-        berth_depth: 10,
-    },
-    {
-        id: 4,
-        vessel_name: "some name",
-        vessel_code: "D123",
-        vessel_length: 122,
-        vessel_draft: 7.5,
-        eta_arrival: "2025-05-17T10:00",
-        actual_arrival: "2025-05-17T10:15",
-        eta_departure: "2025-05-17T16:00",
-        departure: "2025-05-17T16:45",
-        berth_number: "5",
-        berth_length: 150,
-        berth_depth: 10,
-    },
-];
+function parseCustomDateTime(str) {
+    if (!str) return null;
+    const parts = str.split(" ");
+    if (parts.length < 4) return null;
+
+    const day = parts[0].replace(".", "").padStart(2, "0");
+    const month = parts[1].replace(".", "").padStart(2, "0");
+    const year = parts[2];
+    const time = parts[3];
+
+    const isoString = `${year}-${month}-${day}T${time}`;
+    return new Date(isoString);
+}
+
+function isConflict(date1, date2) {
+    if (!date1 || !date2) return false;
+    if (
+        date1.getFullYear() !== date2.getFullYear() ||
+        date1.getMonth() !== date2.getMonth() ||
+        date1.getDate() !== date2.getDate()
+    ) return false;
+
+    const diffHours = Math.abs(date1 - date2) / (1000 * 60 * 60);
+    return diffHours <= 10;
+}
+
+function getBerthConflicts(records) {
+    const berthMap = {};
+    records.forEach((rec) => {
+        if (!rec.berth_number || !rec.eta_arrival) return;
+        const arrivalDate = parseCustomDateTime(rec.eta_arrival);
+        if (!arrivalDate) return;
+        if (!berthMap[rec.berth_number]) berthMap[rec.berth_number] = [];
+        berthMap[rec.berth_number].push({ id: rec.id, arrivalDate });
+    });
+
+    const conflictIds = new Set();
+    Object.values(berthMap).forEach((arrivals) => {
+        for (let i = 0; i < arrivals.length; i++) {
+            for (let j = i + 1; j < arrivals.length; j++) {
+                if (isConflict(arrivals[i].arrivalDate, arrivals[j].arrivalDate)) {
+                    conflictIds.add(arrivals[i].id);
+                    conflictIds.add(arrivals[j].id);
+                }
+            }
+        }
+    });
+    return conflictIds;
+}
 
 const RecordTable = () => {
-    const [records, setRecords] = useState(initialRecords);
+    const [records, setRecords] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [predictions, setPredictions] = useState({});
+    const [predictingId, setPredictingId] = useState(null);
     const [editId, setEditId] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [newRecord, setNewRecord] = useState({
+        vessel_name: "",
         vessel_code: "",
         vessel_length: "",
         vessel_draft: "",
@@ -74,9 +70,79 @@ const RecordTable = () => {
         actual_arrival: "",
         departure: "",
         berth_number: "",
-        berth_length: "",
-        berth_depth: "",
+        total_vessel_weight: "",
     });
+
+    const mapBackendToFrontend = (v) => ({
+        id: v["Vessel Code"] || Math.random(),
+        vessel_name: v["Vessel Name"] || "",
+        vessel_code: v["Vessel Code"] || "",
+        vessel_length: parseFloat(v["Vessel Length"]?.replace(",", ".") || 0),
+        vessel_draft: parseFloat(v["Draft"]?.replace(",", ".") || 0),
+        eta_arrival: v["Arrival Date and Time ETA"] || "",
+        actual_arrival: "",
+        departure: "",
+        berth_number: v["Berth Code/Label"] || "",
+        total_vessel_weight: parseFloat(v["Total Vessel Weight"]?.replace(",", ".") || 0),
+    });
+
+    useEffect(() => {
+        fetch("http://127.0.0.1:8000/get-data/")
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.data) {
+                    const mapped = data.data.map(mapBackendToFrontend);
+
+                    mapped.sort((a, b) => new Date(a.eta_arrival) - new Date(b.eta_arrival));
+
+                    setRecords(mapped);
+                } else {
+                    setError("No data found");
+                }
+                setLoading(false);
+            })
+            .catch(() => {
+                setError("Failed to fetch vessel data");
+                setLoading(false);
+            });
+    }, []);
+
+
+    const handlePredict = async (record) => {
+        setPredictingId(record.id);
+        setError(null);
+
+        const rawPayload = {
+            "Vessel Length": record.vessel_length.toString().replace(".", ","),
+            "Draft": record.vessel_draft.toString().replace(".", ","),
+            "Cargo Weight": "0",
+            "Total Vessel Weight": record.total_vessel_weight.toString().replace(".", ","),
+            "Arrival_Hour": new Date(record.eta_arrival).getHours(),
+            "Arrival_Day": new Date(record.eta_arrival).getDate(),
+        };
+
+        try {
+            const response = await fetch("http://127.0.0.1:8000/predict/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(rawPayload),
+            });
+            const json = await response.json();
+
+            if (json.error) {
+                setError(json.error);
+            } else {
+                setPredictions((prev) => ({
+                    ...prev,
+                    [record.id]: json.predicted_berth,
+                }));
+            }
+        } catch {
+            setError("Prediction request failed");
+        } finally {
+            setPredictingId(null);
+        }
+    };
 
     const handleSave = (id, updatedRecord) => {
         const updated = records.map((rec) => (rec.id === id ? updatedRecord : rec));
@@ -89,8 +155,7 @@ const RecordTable = () => {
     };
 
     const handleDelete = (id) => {
-        const confirmed = window.confirm("Are you sure you want to delete this record?");
-        if (confirmed) {
+        if (window.confirm("Are you sure you want to delete this record?")) {
             setRecords(records.filter((rec) => rec.id !== id));
         }
     };
@@ -101,9 +166,12 @@ const RecordTable = () => {
     };
 
     const handleAddNew = () => {
-        const newId = records.length ? Math.max(...records.map((r) => r.id)) + 1 : 1;
-        setRecords([{ id: newId, ...newRecord }, ...records]);
+        const newId = Date.now();
+        const recordToAdd = { id: newId, ...newRecord };
+        setRecords((prev) => [recordToAdd, ...prev]);
+
         setNewRecord({
+            vessel_name: "",
             vessel_code: "",
             vessel_length: "",
             vessel_draft: "",
@@ -111,15 +179,17 @@ const RecordTable = () => {
             actual_arrival: "",
             departure: "",
             berth_number: "",
-            berth_length: "",
-            berth_depth: "",
+            total_vessel_weight: "",
         });
-        document.getElementById("closeModalBtn").click(); // close modal
+
+        document.getElementById("closeModalBtn").click();
     };
 
     const filteredRecords = records.filter((rec) =>
         rec.vessel_code.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const conflictIds = getBerthConflicts(filteredRecords);
 
     const handleGeneratePDF = () => {
         const doc = new jsPDF();
@@ -127,9 +197,10 @@ const RecordTable = () => {
         doc.setFontSize(18);
         doc.text("Cargo Ship Berth Records", 14, 20);
 
-        const tableData = records.map((rec) => [
+        const tableData = filteredRecords.map((rec) => [
             rec.vessel_code,
             rec.eta_arrival,
+            rec.departure,
             rec.berth_number,
         ]);
 
@@ -142,21 +213,16 @@ const RecordTable = () => {
         doc.save("ship_records.pdf");
     };
 
-    // Count how many times each berth number is used
-    const berthUsage = records.reduce((acc, rec) => {
-        acc[rec.berth_number] = (acc[rec.berth_number] || 0) + 1;
-        return acc;
-    }, {});
-
+    if (loading) return <p>Loading vessels...</p>;
+    if (error) return <p style={{ color: "red" }}>{error}</p>;
 
     return (
         <>
-            {/* Toolbar */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <button className="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">
                     ➕ Add New Record
                 </button>
-                <button onClick={handleGeneratePDF} className="btn btn-warning ">
+                <button onClick={handleGeneratePDF} className="btn btn-warning">
                     📄 Generate PDF
                 </button>
                 <input
@@ -168,7 +234,6 @@ const RecordTable = () => {
                 />
             </div>
 
-            {/* Records */}
             <div className="row gy-4">
                 {filteredRecords.length > 0 ? (
                     filteredRecords.map((record) => (
@@ -180,8 +245,18 @@ const RecordTable = () => {
                                 onSave={handleSave}
                                 onCancel={handleCancel}
                                 onDelete={handleDelete}
-                                isConflict={berthUsage[record.berth_number] > 1}
+                                onPredict={handlePredict}
+                                predictingId={predictingId}
+                                isConflict={conflictIds.has(record.id)}
                             />
+                            {predictions[record.id] && (
+                                <div className="alert alert-success mt-2">
+                                    Predicted Berth:{" "}
+                                    {Array.isArray(predictions[record.id])
+                                        ? predictions[record.id][0]
+                                        : predictions[record.id]}
+                                </div>
+                            )}
                         </div>
                     ))
                 ) : (
@@ -189,13 +264,18 @@ const RecordTable = () => {
                 )}
             </div>
 
-            {/* Modal: Add New Record */}
+            {/* Add New Record Modal */}
             <div className="modal fade" id="addModal" tabIndex="-1">
                 <div className="modal-dialog modal-lg">
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title">Add New Record</h5>
-                            <button id="closeModalBtn" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button
+                                id="closeModalBtn"
+                                className="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                            ></button>
                         </div>
                         <div className="modal-body">
                             <div className="row">

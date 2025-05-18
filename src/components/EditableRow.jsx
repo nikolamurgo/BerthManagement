@@ -1,6 +1,36 @@
 import React, { useState } from "react";
 
-const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, isConflict }) => {
+function parseCustomDateTime(dtString) {
+    if (!dtString) return { date: "", time: "" };
+    const parts = dtString.split(" ");
+    if (parts.length < 4) return { date: "", time: "" };
+
+    const day = parts[0].replace(".", "").padStart(2, "0");
+    const month = parts[1].replace(".", "").padStart(2, "0");
+    const year = parts[2];
+    const time = parts[3].slice(0, 5);
+
+    const date = `${year}-${month}-${day}`;
+    return { date, time };
+}
+
+function formatCustomDateTime(date, time) {
+    if (!date || !time) return "";
+    const [year, month, day] = date.split("-");
+    return `${day}. ${month}. ${year} ${time}:00`;
+}
+
+const EditableRow = ({
+    record,
+    isEditing,
+    onEdit,
+    onSave,
+    onCancel,
+    onDelete,
+    onPredict,
+    predictingId,
+    isConflict,
+}) => {
     const [editedRecord, setEditedRecord] = useState({ ...record });
 
     const handleChange = (e) => {
@@ -8,17 +38,15 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
         setEditedRecord({ ...editedRecord, [name]: value });
     };
 
-    const splitDateTime = (value) => {
-        if (!value) return { date: "", time: "" };
-        const [date, time] = value.split("T");
-        return { date, time };
-    };
+    const splitDateTime = (value) => parseCustomDateTime(value);
 
     const handleDateTimeChange = (field, type, value) => {
         const current = splitDateTime(editedRecord[field]);
         const newDate = type === "date" ? value : current.date;
         const newTime = type === "time" ? value : current.time;
-        setEditedRecord({ ...editedRecord, [field]: `${newDate}T${newTime}` });
+
+        const formatted = formatCustomDateTime(newDate, newTime);
+        setEditedRecord({ ...editedRecord, [field]: formatted });
     };
 
     return (
@@ -29,15 +57,12 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                 </div>
 
                 {isConflict && (
-                    <div className="badge bg-warning text-dark mb-3">
-                        ⚠️ Conflict: Duplicate Berth
-                    </div>
+                    <div className="badge bg-warning text-dark mb-3">⚠️ Conflict: Duplicate Berth</div>
                 )}
-
-
 
                 <h6 className="text-primary fw-bold mb-3">Vessel Information</h6>
 
+                {/* Vessel Name */}
                 <div className="row mb-2">
                     <label className="col-sm-5 col-form-label fw-bold">Vessel Name:</label>
                     <div className="col-sm-7">
@@ -55,12 +80,14 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                     </div>
                 </div>
 
+                {/* Vessel Length */}
                 <div className="row mb-2">
                     <label className="col-sm-5 col-form-label fw-bold">Vessel Length:</label>
                     <div className="col-sm-7">
                         {isEditing ? (
                             <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 name="vessel_length"
                                 value={editedRecord.vessel_length}
                                 onChange={handleChange}
@@ -72,12 +99,14 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                     </div>
                 </div>
 
+                {/* Vessel Draft */}
                 <div className="row mb-2">
                     <label className="col-sm-5 col-form-label fw-bold">Vessel Draft:</label>
                     <div className="col-sm-7">
                         {isEditing ? (
                             <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 name="vessel_draft"
                                 value={editedRecord.vessel_draft}
                                 onChange={handleChange}
@@ -85,6 +114,25 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                             />
                         ) : (
                             <div className="form-control-plaintext">{record.vessel_draft}</div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Total Vessel Weight */}
+                <div className="row mb-2">
+                    <label className="col-sm-5 col-form-label fw-bold">Total Vessel Weight:</label>
+                    <div className="col-sm-7">
+                        {isEditing ? (
+                            <input
+                                type="number"
+                                step="0.01"
+                                name="total_vessel_weight"
+                                value={editedRecord.total_vessel_weight || ""}
+                                onChange={handleChange}
+                                className="form-control"
+                            />
+                        ) : (
+                            <div className="form-control-plaintext">{record.total_vessel_weight}</div>
                         )}
                     </div>
                 </div>
@@ -99,25 +147,18 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                                     <input
                                         type="date"
                                         value={splitDateTime(editedRecord.eta_arrival).date}
-                                        onChange={(e) =>
-                                            handleDateTimeChange("eta_arrival", "date", e.target.value)
-                                        }
+                                        onChange={(e) => handleDateTimeChange("eta_arrival", "date", e.target.value)}
                                         className="form-control w-auto"
                                     />
                                     <input
                                         type="time"
                                         value={splitDateTime(editedRecord.eta_arrival).time}
-                                        onChange={(e) =>
-                                            handleDateTimeChange("eta_arrival", "time", e.target.value)
-                                        }
+                                        onChange={(e) => handleDateTimeChange("eta_arrival", "time", e.target.value)}
                                         className="form-control w-auto"
                                     />
                                 </>
                             ) : (
-                                <div className="form-control-plaintext">
-                                    {splitDateTime(record.eta_arrival).date}{" "}
-                                    <span className="ms-3">{splitDateTime(record.eta_arrival).time}</span>
-                                </div>
+                                <div className="form-control-plaintext">{record.eta_arrival}</div>
                             )}
                         </div>
                     </div>
@@ -133,30 +174,22 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                                     <input
                                         type="date"
                                         value={splitDateTime(editedRecord.actual_arrival).date}
-                                        onChange={(e) =>
-                                            handleDateTimeChange("actual_arrival", "date", e.target.value)
-                                        }
+                                        onChange={(e) => handleDateTimeChange("actual_arrival", "date", e.target.value)}
                                         className="form-control w-auto"
                                     />
                                     <input
                                         type="time"
                                         value={splitDateTime(editedRecord.actual_arrival).time}
-                                        onChange={(e) =>
-                                            handleDateTimeChange("actual_arrival", "time", e.target.value)
-                                        }
+                                        onChange={(e) => handleDateTimeChange("actual_arrival", "time", e.target.value)}
                                         className="form-control w-auto"
                                     />
                                 </>
                             ) : (
-                                <div className="form-control-plaintext">
-                                    {splitDateTime(record.actual_arrival).date}{" "}
-                                    <span className="ms-3">{splitDateTime(record.actual_arrival).time}</span>
-                                </div>
+                                <div className="form-control-plaintext">{record.actual_arrival}</div>
                             )}
                         </div>
                     </div>
                 </div>
-
 
                 {/* Departure */}
                 <div className="row mb-2">
@@ -168,33 +201,26 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                                     <input
                                         type="date"
                                         value={splitDateTime(editedRecord.departure).date}
-                                        onChange={(e) =>
-                                            handleDateTimeChange("departure", "date", e.target.value)
-                                        }
+                                        onChange={(e) => handleDateTimeChange("departure", "date", e.target.value)}
                                         className="form-control w-auto"
                                     />
                                     <input
                                         type="time"
                                         value={splitDateTime(editedRecord.departure).time}
-                                        onChange={(e) =>
-                                            handleDateTimeChange("departure", "time", e.target.value)
-                                        }
+                                        onChange={(e) => handleDateTimeChange("departure", "time", e.target.value)}
                                         className="form-control w-auto"
                                     />
                                 </>
                             ) : (
-                                <div className="form-control-plaintext">
-                                    {splitDateTime(record.departure).date}{" "}
-                                    <span className="ms-3">{splitDateTime(record.departure).time}</span>
-                                </div>
+                                <div className="form-control-plaintext">{record.departure}</div>
                             )}
                         </div>
                     </div>
                 </div>
 
-
                 <h6 className="text-primary fw-bold mb-3">Berth Information</h6>
 
+                {/* Berth Number */}
                 <div className="row mb-2">
                     <label className="col-sm-5 col-form-label fw-bold">Berth Number:</label>
                     <div className="col-sm-7">
@@ -208,40 +234,6 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                             />
                         ) : (
                             <div className="form-control-plaintext">{record.berth_number}</div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="row mb-2">
-                    <label className="col-sm-5 col-form-label fw-bold">Berth Length:</label>
-                    <div className="col-sm-7">
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                name="berth_length"
-                                value={editedRecord.berth_length}
-                                onChange={handleChange}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">{record.berth_length}</div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="row mb-4">
-                    <label className="col-sm-5 col-form-label fw-bold">Berth Depth:</label>
-                    <div className="col-sm-7">
-                        {isEditing ? (
-                            <input
-                                type="text"
-                                name="berth_depth"
-                                value={editedRecord.berth_depth}
-                                onChange={handleChange}
-                                className="form-control"
-                            />
-                        ) : (
-                            <div className="form-control-plaintext">{record.berth_depth}</div>
                         )}
                     </div>
                 </div>
@@ -262,8 +254,17 @@ const EditableRow = ({ record, isEditing, onEdit, onSave, onCancel, onDelete, is
                             <button onClick={onEdit} className="btn btn-primary">
                                 ✏️ Edit
                             </button>
+
                             <button onClick={() => onDelete(record.id)} className="btn btn-danger">
                                 🗑 Delete
+                            </button>
+
+                            <button
+                                onClick={() => onPredict(record)}
+                                className="btn btn-info"
+                                disabled={predictingId === record.id}
+                            >
+                                {predictingId === record.id ? "Predicting..." : "Predict Berth"}
                             </button>
                         </>
                     )}
