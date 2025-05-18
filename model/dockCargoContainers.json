@@ -1,0 +1,50 @@
+[
+    {
+        "berth": "7",
+        "length_m": 150,
+        "depth_m": "10.10 - 11.60",
+        "cargo": "Containers, Ro-Ro",
+        "bollards_mt": "60 - 100",
+        "berth_level_m": 2.88
+    },
+    {
+        "berth": "7a",
+        "length_m": 200,
+        "depth_m": "11.10 - 15.10",
+        "cargo": "Containers",
+        "bollards_mt": 100,
+        "berth_level_m": 2.93
+    },
+    {
+        "berth": "7b",
+        "length_m": 100,
+        "depth_m": "14.70 - 15.10",
+        "cargo": "Containers",
+        "bollards_mt": 100,
+        "berth_level_m": 2.93
+    },
+    {
+        "berth": "7c",
+        "length_m": 146,
+        "depth_m": "14.70 - 15.10",
+        "cargo": "Containers",
+        "bollards_mt": 150,
+        "berth_level_m": 2.98
+    },
+    {
+        "berth": "7d",
+        "length_m": 98,
+        "depth_m": "14.80 - 15.10",
+        "cargo": "Containers",
+        "bollards_mt": "150",
+        "berth_level_m": 2.98
+    },
+    {
+        "berth": "7d",
+        "length_m": 98,
+        "depth_m": "14.80 - 15.10",
+        "cargo": "Containers",
+        "bollards_mt": "200",
+        "berth_level_m": 2.98
+    }
+]
